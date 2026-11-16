@@ -1,324 +1,340 @@
-# Waypoint – AI Career Navigation
+<div align="center">
+  <a href="https://waypoint-career-navigation.onrender.com" aria-label="Open Waypoint website">
+    <img src="https://raw.githubusercontent.com/JayeshJadhav28/waypoint-career-navigation/master/assets/waypoint-mark.svg" alt="Waypoint compass logo" width="112" height="112" />
+  </a>
 
-**Find your next direction.**
+  <h1>Waypoint</h1>
+  <p><strong>Find your next direction.</strong></p>
+  <p>Career navigation</p>
 
-Waypoint is an AI-powered career navigation platform for students and early-career
-professionals. It turns a guided career assessment into structured, readable
-guidance: career directions with indicative suitability scores, skills to develop,
-certifications and learning resources to investigate, and a staged career roadmap.
+  <p>
+    <a href="https://waypoint-career-navigation.onrender.com"><strong>Website</strong></a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/JayeshJadhav28/waypoint-career-navigation">Source code</a>
+    &nbsp;·&nbsp;
+    <a href="https://github.com/JayeshJadhav28/waypoint-career-navigation/issues">Report an issue</a>
+  </p>
+</div>
 
-Waypoint is built with Python, Streamlit, the Groq API and Pydantic. It keeps the
-original career-advisor engine and response model while presenting the results as a
-cohesive, responsive product experience.
+<p align="center">
+  <img src="https://img.shields.io/badge/Python-3.13.12-3776AB?logo=python&logoColor=white" alt="Python 3.13.12" />
+  <img src="https://img.shields.io/badge/Streamlit-1.61.1-FF4B4B?logo=streamlit&logoColor=white" alt="Streamlit 1.61.1" />
+  <img src="https://img.shields.io/badge/AI%20Provider-Groq-111827" alt="Groq API" />
+  <img src="https://img.shields.io/badge/Model-gpt--oss--20b-374151" alt="openai/gpt-oss-20b" />
+  <img src="https://img.shields.io/badge/Validation-Pydantic-E92063" alt="Pydantic" />
+  <img src="https://img.shields.io/badge/Deployment-Render-46E3B7?logo=render&logoColor=111827" alt="Render" />
+</p>
 
 ---
 
+## Overview
+
+Waypoint is an AI-powered career navigation platform for students, recent graduates and early-career professionals. It turns a guided career assessment into structured guidance: career directions with indicative suitability scores, skills to develop, certifications and learning resources to investigate, and a staged career roadmap.
+
+Built with Python, Streamlit, the Groq API and Pydantic, Waypoint keeps the existing career-advisor engine while presenting its output through a cohesive, responsive product experience.
+
 ## What Waypoint does
 
-1. **Discover** — you complete a guided assessment covering your education,
-   interests, current capabilities and goals.
-2. **Explore** — the assessment is converted into a profile description, sent to the
-   Groq API and analysed against the existing career-advisor prompt.
-3. **Develop** — Waypoint presents the suggested skills, certifications and learning
-   resources returned by the model.
-4. **Navigate** — the generated roadmap is shown as a numbered timeline with
-   estimated durations.
+Waypoint organizes career exploration into four stages:
 
-Waypoint is **not** a chatbot, a job board or a validated psychometric test. It does
-not store results permanently, does not use accounts and does not claim guaranteed
-employment outcomes.
-
-## Who it serves
-
-Students, recent graduates and early-career professionals who want a structured
-starting point for career research and planning.
+1. **Discover** — complete a guided assessment covering your education, interests, current capabilities and goals.
+2. **Explore** — your submitted profile is sent through the existing career-advisor prompt to the Groq API.
+3. **Develop** — review suggested skills, certifications and learning resources returned by the model.
+4. **Navigate** — use the generated roadmap and its estimated durations as a starting point for planning.
 
 ## Features
 
-- Guided, section-based career assessment (personal profile, interests,
-  capabilities, goals) with required-field validation.
-- AI analysis through the existing Groq integration and the configured
-  `openai/gpt-oss-20b` model.
-- Pydantic-validated structured responses.
-- Career recommendation cards with suitability scores and explanations.
-- Skills to develop, alongside the capabilities you reported.
+- Guided, section-based career assessment covering profile, interests, capabilities and goals.
+- AI analysis through the Groq API using the configured `openai/gpt-oss-20b` model.
+- Structured response validation with Pydantic.
+- Career recommendations with indicative suitability scores and explanations.
+- Skills to develop, shown alongside the capabilities reported in the assessment.
 - Certification and learning-resource recommendations.
 - Numbered career roadmap with AI-estimated durations.
-- Session-based persistence while navigating: results stay available until the
-  browser session ends.
-- "Start a new assessment" and "Clear session" actions.
-- Friendly error handling when the API key is missing or the response is invalid.
-- Mock-data mode for interface development and automated testing.
-- Rich console CLI (`main.py`) from the original codebase.
+- Session-based results that remain available while navigating during the current session.
+- Start-a-new-assessment and clear-session actions.
+- User-facing error handling for missing API configuration and invalid responses.
+- Mock-data mode for interface development and automated tests.
 
-## How recommendations are generated
+## How it works
 
-```text
-Structured assessment
-        │
-        ▼
-Profile description (plain text)
-        │
-        ▼
-career_advisor.get_career_advice()
-        │
-        ▼
-prompts.py  →  Groq API (openai/gpt-oss-20b)
-        │
-        ▼
-JSON response
-        │
-        ▼
-Pydantic validation (models.CareerAdvice)
-        │
-        ▼
-Waypoint results screens
+### Application architecture
+
+```mermaid
+flowchart TD
+    Student[Student] --> UI[Streamlit interface<br/>app.py]
+    UI --> Profile[Build profile description]
+    Profile --> Advisor[career_advisor.py]
+    Prompts[prompts.py] --> Advisor
+    Advisor --> Groq[Groq API<br/>openai/gpt-oss-20b]
+    Groq --> JSON[Structured JSON response]
+    JSON --> Validate[Pydantic validation<br/>models.CareerAdvice]
+    Validate --> Session[Session-scoped result state]
+    Session --> Results[Waypoint results screens]
+    Results --> Careers[Career recommendations]
+    Results --> Skills[Skills and development]
+    Results --> Learning[Certifications and resources]
+    Results --> Roadmap[Career roadmap]
 ```
 
-The backend modules (`career_advisor.py`, `prompts.py`, `models.py`,
-`mock_data.py`) are unchanged by the interface redesign. `app.py` collects the
-structured form input, converts it into the profile text expected by the advisor,
-and renders the validated response.
+### Student journey
 
-### About the suitability score
+```mermaid
+flowchart LR
+    A[Discover<br/>Complete assessment] --> B[Explore<br/>Review career directions]
+    B --> C[Develop<br/>Identify skills and learning]
+    C --> D[Navigate<br/>Follow a career roadmap]
+```
 
-Scores are an **indicative AI assessment** of alignment between the submitted
-profile and the returned career. They are:
+### Deployment architecture
 
-- not an employment probability;
-- not a scientifically validated aptitude result;
-- dependent on the quality and honesty of the submitted profile.
+```mermaid
+flowchart TD
+    Dev[Maintainer] --> Repo[GitHub repository]
+    Repo --> Blueprint[Render Blueprint<br/>render.yaml]
+    Blueprint --> Build[Install pinned dependencies<br/>Python 3.13.12]
+    Build --> Service[Render Web Service<br/>Streamlit app]
+    Browser[Student browser] --> Service
+    Service --> Health[Health endpoint<br/>/_stcore/health]
+    Service --> Advisor[Career advisor]
+    Secret[Render environment<br/>GROQ_API_KEY] --> Advisor
+    Advisor --> API[Groq API]
+```
 
-Users should research roles, talk to people working in the field and verify
-requirements independently.
+The application does not use a database. Assessment results are held in the active Streamlit session and are not saved as permanent user records.
 
-## Skills, certifications and resources
+## AI recommendations and responsible use
 
-- **Skills to develop** are returned by the AI response and displayed in order. The
-  application does not measure proficiency.
-- **Reported capabilities** are exactly what the user entered in the assessment;
-  Waypoint does not verify or score them.
-- **Certifications and resources** are rendered from the AI response. The current
-  response schema does not include provider URLs, so Waypoint does not invent links,
-  validity periods or endorsements. Always confirm details with the official provider.
-- **Roadmap durations** are AI estimates, not commitments.
+The configured model is `openai/gpt-oss-20b`, accessed through the Groq API. The assessment is converted into a profile description, passed to the existing career-advisor prompt, and validated against the `models.CareerAdvice` Pydantic model before the results are displayed.
+
+**Suitability scores are indicative AI assessments**, not employment probabilities, scientifically validated aptitude scores or guarantees of career success. Results depend on the accuracy and completeness of the submitted profile. Use them as a starting point for further research and discussion with people working in the relevant fields.
+
+- **Reported capabilities** reflect what the student entered. Waypoint does not independently verify or score them.
+- **Skills to develop** are suggestions returned by the AI; the application does not measure proficiency.
+- **Certifications and learning resources** are generated recommendations. The current response schema does not provide provider URLs, so Waypoint does not invent links, validity periods or endorsements. Verify details with the official provider.
+- **Roadmap durations** are AI estimates, not guaranteed completion periods.
+- AI output may be inaccurate or outdated. Independently verify important career, course and certification decisions.
 
 ## Technology stack
 
 | Layer | Technology |
 | --- | --- |
-| Language | Python 3.13.12 (pinned via `.python-version`) |
-| Interface | Streamlit |
+| Language | Python 3.13.12 |
+| Web interface | Streamlit 1.61.1 |
 | AI provider | Groq API |
-| Model | `openai/gpt-oss-20b` |
-| Validation | Pydantic |
+| Configured model | `openai/gpt-oss-20b` |
+| Response validation | Pydantic 2.13.4 |
 | Configuration | `python-dotenv`, environment variables, Streamlit secrets |
 | CLI | Rich |
-| Deployment | Render (Blueprint via `render.yaml`) |
+| Hosting | Render Blueprint |
+| Browser / UI testing | Playwright and Streamlit AppTest (development and QA) |
 
-No additional runtime dependencies were introduced by the redesign.
+Runtime dependencies are pinned in `requirements.txt`.
 
 ## Project structure
 
 ```text
-AI-Career-Advisor-main/
-├── app.py                  # Waypoint Streamlit application and router
-├── ui_theme.py             # Design system, HTML components and CSS
-├── career_advisor.py       # Groq client call and response handling
-├── prompts.py              # AI prompt definitions
-├── models.py               # Pydantic response models
-├── mock_data.py            # Sample response for mock mode
-├── main.py                 # Rich console CLI version
-├── config.py               # Empty placeholder from the original project
-├── requirements.txt        # Pinned Python dependencies
-├── render.yaml             # Render Blueprint
-├── .python-version         # 3.13.12
+waypoint-career-navigation/
+├── app.py                     # Waypoint Streamlit application and navigation
+├── ui_theme.py                # Design tokens, shared UI components and CSS
+├── career_advisor.py          # Groq request and response handling
+├── prompts.py                 # Career-advisor prompt definitions
+├── models.py                  # Pydantic response models
+├── mock_data.py               # Sample response for mock mode
+├── main.py                    # Original Rich console CLI
+├── requirements.txt           # Pinned Python dependencies
+├── render.yaml                # Render Blueprint configuration
+├── .python-version             # Python 3.13.12
 ├── .streamlit/
-│   └── config.toml         # Waypoint theme and headless server settings
+│   └── config.toml             # Streamlit theme and server configuration
 ├── assets/
 │   ├── waypoint-logo.svg
 │   ├── waypoint-mark.svg
 │   ├── favicon.svg
 │   └── favicon.png
 ├── tests/
-│   └── test_app.py         # Streamlit AppTest functional tests
-└── screenshots/            # Waypoint interface screenshots
+│   └── test_app.py             # Streamlit AppTest suite
+├── screenshots/                # Waypoint desktop, tablet and mobile captures
+└── .github/
+    └── workflows/
+        └── keep-alive.yml      # Scheduled Render health check
 ```
 
-## Interface
+## Interface previews
 
-![Waypoint overview](screenshots/waypoint-overview.png)
+<p align="center">
+  <img src="screenshots/waypoint-overview.png" alt="Waypoint overview screen" width="88%" />
+</p>
+<p align="center"><em>Overview</em></p>
 
-![Career recommendations](screenshots/waypoint-recommendations.png)
+<p align="center">
+  <img src="screenshots/waypoint-recommendations.png" alt="Waypoint career recommendations" width="88%" />
+</p>
+<p align="center"><em>Career recommendations</em></p>
 
-![Career roadmap](screenshots/waypoint-roadmap.png)
+<p align="center">
+  <img src="screenshots/waypoint-roadmap.png" alt="Waypoint career roadmap" width="88%" />
+</p>
+<p align="center"><em>Career roadmap</em></p>
 
-Additional desktop, tablet and mobile captures are available in `screenshots/`.
+Additional desktop, tablet and mobile screenshots are available in `screenshots/`.
 
-## Local setup
+## Run locally
 
-### 1. Create a virtual environment
+### 1. Requirements
+
+- Python 3.13.12 (the repository pins this in `.python-version`).
+- A Groq API key for real career assessments.
+
+### 2. Create and activate a virtual environment
+
+**Windows PowerShell**
 
 ```powershell
-python -m venv .venv
-```
-
-### 2. Activate it
-
-Windows (PowerShell):
-
-```powershell
+py -3.13 -m venv .venv
 .\.venv\Scripts\Activate.ps1
 ```
 
-macOS/Linux:
+**macOS / Linux**
 
 ```bash
+python3.13 -m venv .venv
 source .venv/bin/activate
 ```
 
 ### 3. Install dependencies
 
 ```bash
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 4. Configure the Groq API key
 
 Create a `.env` file in the project root:
 
-```text
+```dotenv
 GROQ_API_KEY=your_groq_api_key
 ```
 
-Get a key from <https://console.groq.com/keys>. Never commit `.env`; it is already
-listed in `.gitignore`.
+Create or manage a key at [Groq Console](https://console.groq.com/keys). Keep `.env` private; it is listed in `.gitignore`. Never commit API keys or paste them into source files.
 
-### 5. Run the application
+### 5. Start Waypoint
 
 ```bash
 python -m streamlit run app.py
 ```
 
-Open <http://localhost:8501>.
+Open [http://localhost:8501](http://localhost:8501).
 
 ### Optional: mock-data mode
 
-To exercise the full result flow without calling the API:
+Mock mode lets you inspect the result screens without making a Groq API request.
+
+**Windows PowerShell**
 
 ```powershell
-$env:WAYPOINT_USE_MOCK_DATA="true"
+$env:WAYPOINT_USE_MOCK_DATA = "true"
 python -m streamlit run app.py
 ```
 
-When mock mode is on, Waypoint displays a "Sample data mode" indicator and returns
-the bundled example analysis from `mock_data.py`.
-
-### Optional: console CLI
+**macOS / Linux**
 
 ```bash
-python main.py
+WAYPOINT_USE_MOCK_DATA=true python -m streamlit run app.py
 ```
 
-## Running the tests
+The interface displays a sample-data indicator and uses the bundled response from `mock_data.py`. Set `WAYPOINT_USE_MOCK_DATA=false` to explicitly request the real AI path.
+
+## Run tests
+
+Install the test runner if it is not already available:
 
 ```bash
-pip install pytest
-$env:WAYPOINT_USE_MOCK_DATA="true"
+python -m pip install pytest
+```
+
+Run the Streamlit AppTest suite in mock mode:
+
+**Windows PowerShell**
+
+```powershell
+$env:WAYPOINT_USE_MOCK_DATA = "true"
 python -m pytest tests -q
 ```
 
-The tests use `streamlit.testing.v1.AppTest`; they do not call the Groq API.
+**macOS / Linux**
 
-## Deploying to Render
+```bash
+WAYPOINT_USE_MOCK_DATA=true python -m pytest tests -q
+```
 
-`render.yaml` defines a Render Blueprint with:
+The AppTest suite exercises the interface without calling the Groq API. Real API integration tests should be run separately and will consume API usage.
 
-- service name `waypoint-career-navigation`
-- Python runtime and `pip install -r requirements.txt`
-- start command:
-  `python -m streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true --browser.gatherUsageStats false`
-- health check path `/_stcore/health`
-- `GROQ_API_KEY` prompted at deploy time (`sync: false`)
-- Free plan initially
+## Deploy on Render
 
-### Steps
+The repository includes `render.yaml` for Render Blueprint deployment.
 
-1. Push this repository to GitHub (after your own review).
-2. In the Render dashboard choose **New → Blueprint**.
-3. Connect the GitHub repository. Render reads `render.yaml`.
-4. When prompted, paste your `GROQ_API_KEY` value.
-5. Apply the Blueprint and wait for the first deploy.
-6. Open the service URL and confirm the health check and the assessment flow.
+### Blueprint configuration
 
-### Free-plan considerations
+- **Service:** `waypoint-career-navigation`
+- **Runtime:** Python
+- **Python:** 3.13.12 (from `.python-version`)
+- **Plan:** Free initially
+- **Build command:** `pip install -r requirements.txt`
+- **Start command:**
 
-Render's Free instance type provides 0.1 CPU and 512 MB RAM and spins down after
-inactivity, so the first request after idling can take tens of seconds. If the app
-runs out of memory during real Groq analysis or is too slow to be usable, move to a
-paid instance type in the Render dashboard. The application itself does not require
-more than the Free plan to start.
+  ```bash
+  python -m streamlit run app.py --server.address 0.0.0.0 --server.port $PORT --server.headless true --browser.gatherUsageStats false
+  ```
 
-No service has been deployed from this workspace; the configuration is ready but the
-live deployment still has to be performed.
+- **Health check:** `/_stcore/health`
 
-### Keeping the Free instance awake
+### Deployment steps
 
-Free web services spin down after roughly 15 minutes without traffic, and the next
-visitor pays the cold-start delay. A timer inside the app cannot prevent this — it is
-stopped together with the instance — so the repository ships an external keep-alive
-ping instead.
+1. Push the repository to GitHub.
+2. Sign in to [Render](https://dashboard.render.com/).
+3. Choose **New → Blueprint** and connect this repository.
+4. Render reads `render.yaml` and prepares the service.
+5. Set `GROQ_API_KEY` in the Render environment settings when prompted. Do not add the key to `render.yaml` or GitHub.
+6. Set `WAYPOINT_USE_MOCK_DATA` to `false` in the Render environment to explicitly use the real AI path.
+7. Apply the Blueprint, wait for deployment, and inspect the service logs.
+8. Visit the deployed URL, verify `/_stcore/health`, and complete one real career assessment.
 
-`.github/workflows/keep-alive.yml` runs on a `*/5 * * * *` schedule and requests
-`/_stcore/health`, which wakes the service and verifies it returns `200`. It can also
-be run manually from **Actions → Keep-alive → Run workflow**.
+### Free-plan behaviour
 
-The workflow targets `https://waypoint-career-navigation.onrender.com` by default.
-If the deployed host differs (Render appends a suffix when a name is taken), set a
-repository variable instead of editing the file:
+Render Free web services can spin down after a period without inbound traffic. The first visit after inactivity may take longer while the service starts. The Free instance also has limited CPU and memory; monitor logs and resource usage during real assessments. Upgrade only if observed performance or memory use requires it.
 
-**Settings → Secrets and variables → Actions → Variables → New repository variable**
-`RENDER_APP_URL` = `https://<your-service>.onrender.com`
+### Optional keep-alive workflow
 
-Notes:
+`.github/workflows/keep-alive.yml` contains a scheduled GitHub Actions workflow that requests the Streamlit health endpoint. It targets the default hostname `https://waypoint-career-navigation.onrender.com`.
 
-- GitHub Actions schedules are best-effort and can run late under load, so an
-  occasional cold start is still possible; the ping also wakes the service when that
-  happens.
-- Scheduled workflows in public repositories are disabled after 60 days without
-  repository activity. Re-enable the workflow from the Actions tab if it stops.
-- GitHub Actions is free for public repositories; a private repository consumes
-  included minutes (~24 s per run at a 5-minute cadence).
+If Render assigns a different hostname, configure the repository variable below:
+
+`RENDER_APP_URL=https://<your-render-service>.onrender.com`
+
+Add it under **Settings → Secrets and variables → Actions → Variables**. The workflow can also be started manually from **Actions → Keep-alive → Run workflow**. GitHub scheduled workflows are best-effort and may run late; the keep-alive workflow does not guarantee zero cold starts.
 
 ## Security and privacy
 
-- API keys are read from the environment or Streamlit secrets; none are hard-coded.
-- `.env`, `.venv/`, `.streamlit/secrets.toml` and Python caches are git-ignored.
-- Assessment results live only in the current Streamlit session; there is no
-  database, account or permanent history.
-- Profile text is sent to the Groq API to generate the analysis.
-- Error messages shown to users are generic; internal exception details are not
-  displayed.
-- Do not enter passwords, financial details or unnecessary sensitive personal data.
+- The Groq API key is read from the environment or Streamlit secrets; it is not hard-coded.
+- `.env`, `.venv/`, `.streamlit/secrets.toml` and Python cache files are excluded through `.gitignore`.
+- Assessment results are session-scoped. There is no account system, database, permanent history or cross-device synchronisation.
+- Submitted profile information is sent to the Groq API to generate recommendations.
+- Do not enter passwords, financial details or unnecessary sensitive personal information.
 
 ## Current limitations
 
-- No authentication, saved history or cross-device sync.
-- No resume upload, job-market data, salary prediction or interview preparation.
-- No multi-turn conversation; each analysis is based on one submitted assessment.
-- AI output can be inaccurate or outdated, and certification/resource details must be
-  verified independently.
-- The AI response schema does not include provider URLs or skill proficiency scores,
-  so the interface does not display them.
+- No authentication, database, saved history or cross-device sync.
+- No multi-turn career chat; each analysis is based on one submitted assessment.
+- No resume upload, live job-market integration, salary prediction or interview preparation.
+- Career scores are indicative AI-generated assessments, not validated aptitude measurements or employment probabilities.
+- Course and certification details may be incomplete or outdated and must be independently verified.
+- The current response schema does not provide provider URLs or skill-proficiency scores.
 
 ## Attribution
 
-Waypoint began as an existing AI career-advisor codebase and the redesign preserves
-its original backend, prompts, models and source attribution. Original project:
-AI Career Advisor, created by Muskan, built with Python, Groq, Pydantic and
-Streamlit. Waypoint is an independent project and is not affiliated with or endorsed
-by any employer, certification provider or educational institution.
+Waypoint began as an existing AI career-advisor codebase. The redesign preserves the original backend, prompts, response models and source attribution. The original project was titled **AI Career Advisor**, created by Muskan, and built with Python, Groq, Pydantic and Streamlit. Waypoint is an independent rebrand and is not affiliated with or endorsed by Groq, Render, any employer, certification provider or educational institution.
 
 ## License
 
-MIT License, as with the original project.
+A separate `LICENSE` file is not currently present in this repository. The previous project README referred to an MIT license, but confirm the original license and redistribution permissions with the original author before reusing or redistributing the code. Do not treat this README as a substitute for a license grant.
