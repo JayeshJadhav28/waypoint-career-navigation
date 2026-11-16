@@ -145,6 +145,16 @@ AI-Career-Advisor-main/
 └── screenshots/            # Waypoint interface screenshots
 ```
 
+## Interface
+
+![Waypoint overview](screenshots/waypoint-overview.png)
+
+![Career recommendations](screenshots/waypoint-recommendations.png)
+
+![Career roadmap](screenshots/waypoint-roadmap.png)
+
+Additional desktop, tablet and mobile captures are available in `screenshots/`.
+
 ## Local setup
 
 ### 1. Create a virtual environment
