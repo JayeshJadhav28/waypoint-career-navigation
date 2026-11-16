@@ -262,6 +262,34 @@ more than the Free plan to start.
 No service has been deployed from this workspace; the configuration is ready but the
 live deployment still has to be performed.
 
+### Keeping the Free instance awake
+
+Free web services spin down after roughly 15 minutes without traffic, and the next
+visitor pays the cold-start delay. A timer inside the app cannot prevent this — it is
+stopped together with the instance — so the repository ships an external keep-alive
+ping instead.
+
+`.github/workflows/keep-alive.yml` runs on a `*/5 * * * *` schedule and requests
+`/_stcore/health`, which wakes the service and verifies it returns `200`. It can also
+be run manually from **Actions → Keep-alive → Run workflow**.
+
+The workflow targets `https://waypoint-career-navigation.onrender.com` by default.
+If the deployed host differs (Render appends a suffix when a name is taken), set a
+repository variable instead of editing the file:
+
+**Settings → Secrets and variables → Actions → Variables → New repository variable**
+`RENDER_APP_URL` = `https://<your-service>.onrender.com`
+
+Notes:
+
+- GitHub Actions schedules are best-effort and can run late under load, so an
+  occasional cold start is still possible; the ping also wakes the service when that
+  happens.
+- Scheduled workflows in public repositories are disabled after 60 days without
+  repository activity. Re-enable the workflow from the Actions tab if it stops.
+- GitHub Actions is free for public repositories; a private repository consumes
+  included minutes (~24 s per run at a 5-minute cadence).
+
 ## Security and privacy
 
 - API keys are read from the environment or Streamlit secrets; none are hard-coded.

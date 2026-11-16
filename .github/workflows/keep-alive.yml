@@ -1,0 +1,66 @@
+name: Keep-alive
+
+# Render's free plan spins a service down after ~15 minutes without traffic.
+# An in-process timer cannot prevent that (it dies with the instance), so an
+# external ping is required. This workflow pings the Streamlit health endpoint
+# well inside that window and wakes the service if it has already slept.
+
+on:
+  schedule:
+    # Every 5 minutes. GitHub may delay scheduled runs under load, and it is
+    # the shortest supported interval, which leaves the most margin before
+    # Render's 15-minute idle timeout.
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+    inputs:
+      url:
+        description: "Base URL to ping (leave empty to use the RENDER_APP_URL repository variable)"
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: render-keep-alive
+  cancel-in-progress: true
+
+jobs:
+  ping:
+    name: Ping Render app
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Wake and verify the service
+        env:
+          # Override per-repository with Settings > Secrets and variables >
+          # Actions > Variables > RENDER_APP_URL when the deployed host differs.
+          DEFAULT_URL: https://waypoint-career-navigation.onrender.com
+          CONFIGURED_URL: ${{ vars.RENDER_APP_URL }}
+          INPUT_URL: ${{ inputs.url }}
+        run: |
+          set -euo pipefail
+
+          base="${INPUT_URL:-${CONFIGURED_URL:-$DEFAULT_URL}}"
+          base="${base%/}"
+          health="${base}/_stcore/health"
+
+          echo "Target: $health"
+          echo "Started: $(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+          for attempt in 1 2 3 4; do
+            # A sleeping Render instance needs ~50s to boot, so allow a long
+            # timeout; the request itself wakes the service.
+            code="$(curl -sS -o /dev/null -w '%{http_code}' --max-time 75 "$health" || printf '000')"
+            echo "attempt ${attempt} -> HTTP ${code}"
+
+            if [ "$code" = "200" ]; then
+              echo "Service is awake at $(date -u '+%Y-%m-%dT%H:%M:%SZ')."
+              exit 0
+            fi
+
+            sleep 20
+          done
+
+          echo "::error::Service did not return HTTP 200 from ${health}"
+          exit 1
