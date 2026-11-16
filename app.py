@@ -456,7 +456,6 @@ def run_pending_analysis() -> None:
     if profile is None:
         return
 
-    st.session_state.pop("pending_profile", None)
     st.session_state.last_profile = profile
 
     with st.spinner("Waypoint is reviewing your profile. This usually takes a few seconds."):
@@ -464,9 +463,15 @@ def run_pending_analysis() -> None:
             advice = analyze_profile(profile)
         except Exception as exc:  # noqa: BLE001 - surface a safe, useful message
             print(f"[waypoint] analysis failed: {type(exc).__name__}")
+            st.session_state.pop("pending_profile", None)
             st.session_state.analysis_error = friendly_error(exc)
             st.session_state.analysis_success = False
+            # The form is long and the message renders above it, so bring the
+            # view back to the status area instead of leaving a silent no-op.
+            st.session_state["_scroll_to_status"] = True
+            st.session_state["_analysis_error_toast"] = True
         else:
+            st.session_state.pop("pending_profile", None)
             st.session_state.career_advice = advice
             st.session_state.profile_used = profile
             st.session_state.analysis_error = None
@@ -649,6 +654,8 @@ def render_assessment() -> None:
     analysis_error = st.session_state.get("analysis_error")
     if analysis_error:
         st.error(analysis_error)
+        if st.session_state.pop("_analysis_error_toast", False):
+            st.toast("Career analysis did not complete. See the message at the top of this page.")
         can_retry = USE_MOCK_DATA or client is not None
         c1, c2, _ = st.columns([1.15, 1.15, 2])
         with c1:
@@ -861,6 +868,7 @@ def render_assessment() -> None:
             st.session_state.pending_profile = build_profile_text(data)
             st.session_state.analysis_error = None
             st.session_state.pop("form_errors", None)
+            st.session_state["_scroll_to_status"] = True
             st.rerun()
 
     page_footer()
@@ -1257,6 +1265,9 @@ def render_about() -> None:
 # ---------------------------------------------------------------------------
 
 render_sidebar()
+
+if st.session_state.pop("_scroll_to_status", False):
+    scroll_to_top()
 
 if st.session_state.get("_rendered_page") != st.session_state.page:
     st.session_state["_rendered_page"] = st.session_state.page
