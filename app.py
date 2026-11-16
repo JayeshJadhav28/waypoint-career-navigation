@@ -10,6 +10,7 @@ from __future__ import annotations
 import os
 
 import streamlit as st
+import streamlit.components.v1 as components
 from dotenv import load_dotenv
 from groq import Groq
 
@@ -202,6 +203,28 @@ if st.session_state.page in RESULT_PAGES and "career_advice" not in st.session_s
 def go(page: str) -> None:
     st.session_state.page = page
     st.rerun()
+
+
+def scroll_to_top() -> None:
+    """Reset the page scroll once per page change.
+
+    A tiny zero-height component runs after the new page has rendered and
+    resets the main scroll container. It is only emitted when the visible page
+    changes, so ordinary widget interactions never jump.
+    """
+    components.html(
+        """
+        <script>
+          (function () {
+            const doc = window.parent.document;
+            const main = doc.querySelector('[data-testid="stMain"]');
+            if (main) main.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+            window.parent.scrollTo({ top: 0, left: 0, behavior: 'auto' });
+          })();
+        </script>
+        """,
+        height=0,
+    )
 
 
 def clear_form() -> None:
@@ -1234,6 +1257,10 @@ def render_about() -> None:
 # ---------------------------------------------------------------------------
 
 render_sidebar()
+
+if st.session_state.get("_rendered_page") != st.session_state.page:
+    st.session_state["_rendered_page"] = st.session_state.page
+    scroll_to_top()
 
 PAGES = {
     "overview": render_overview,
