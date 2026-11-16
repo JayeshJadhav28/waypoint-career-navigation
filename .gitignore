@@ -5,3 +5,7 @@ venv/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Test and QA output: Playwright captures, logs and generated reports
+test-artifacts/
+screenshots/
